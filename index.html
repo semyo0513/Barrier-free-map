@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>사천 배리어프리 지도 - 모두를 위한 무장애 길</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="휠체어, 유모차, 보행 약자를 위한 사천시 배리어프리(무장애) 지도입니다. 누구나 쉽게 길 상태를 제보하고 공유할 수 있습니다.">
+  <meta name="keywords" content="배리어프리, 무장애지도, 사천시, 휠체어 지도, 유모차 지도, 교통약자">
+  <meta property="og:title" content="사천 배리어프리 지도">
+  <meta property="og:description" content="모두를 위한 무장애 길, 사천 배리어프리 지도에서 길 상태를 실시간으로 확인하고 기록해보세요.">
+  <meta property="og:type" content="website">
+
+  <!-- Google Fonts (Noto Sans KR & Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Shell Container -->
+  <div id="app-container">
+    
+    <!-- Top Header Bar -->
+    <header class="app-header">
+      <div class="header-logo">
+        <i class="fa-solid fa-wheelchair-active brand-icon"></i>
+        <div class="brand-text">
+          <h1>사천 무장애 지도</h1>
+          <span class="brand-sub">Barrier-Free Map</span>
+        </div>
+      </div>
+      <div class="header-controls">
+        <div id="db-status-badge" class="status-badge local" title="데이터베이스 상태">
+          <span class="status-dot"></span>
+          <span class="status-text">로컬 저장소</span>
+        </div>
+        <button id="settingsBtn" class="icon-btn" title="Firebase 설정">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Map Element -->
+    <main id="map-container">
+      <div id="map"></div>
+    </main>
+
+    <!-- Floating Actions Panel -->
+    <div class="floating-controls">
+      <!-- GPS Location Button -->
+      <button id="locateBtn" class="floating-btn locate-btn" title="내 위치로 이동">
+        <i class="fa-solid fa-crosshairs"></i>
+      </button>
+    </div>
+
+    <!-- Bottom Record CTA Button (Initial state) -->
+    <div id="record-cta-container">
+      <button id="recordToggleBtn" class="cta-btn primary-cta">
+        <i class="fa-solid fa-route"></i> 길 상태 기록하기
+      </button>
+    </div>
+
+    <!-- Active Record Instruction Overlay (Visible when recording) -->
+    <div id="record-instruction-panel" class="instruction-panel hidden">
+      <div class="instruction-content">
+        <span class="instruction-step-num">Step 1</span>
+        <p id="instruction-text">지도에서 길의 <strong>시작점</strong>을 터치해 주세요.</p>
+      </div>
+      <button id="cancelRecordBtn" class="icon-btn close-instruction" title="기록 취소">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Bottom Path Rating Selector Panel (Visible when start & end points are selected) -->
+    <div id="rating-panel" class="rating-panel hidden">
+      <div class="rating-panel-header">
+        <div class="rating-panel-handle"></div>
+        <h3>선택한 구간의 상태는 어떤가요?</h3>
+        <p>중학생 제보자의 소중한 정보가 지도에 반영됩니다.</p>
+      </div>
+      
+      <div class="rating-buttons-container">
+        <!-- Green: Convenient -->
+        <button class="rating-option-btn rate-convenient" data-rating="convenient">
+          <div class="rating-icon-wrapper">
+            <i class="fa-solid fa-face-smile"></i>
+          </div>
+          <div class="rating-info">
+            <span class="rating-title">편리한 길</span>
+            <span class="rating-desc">턱이 없고 경사가 완만해요</span>
+          </div>
+          <span class="color-badge green">🟢</span>
+        </button>
+
+        <!-- Yellow: Caution -->
+        <button class="rating-option-btn rate-caution" data-rating="caution">
+          <div class="rating-icon-wrapper">
+            <i class="fa-solid fa-face-meh"></i>
+          </div>
+          <div class="rating-info">
+            <span class="rating-title">주의가 필요한 길</span>
+            <span class="rating-desc">경사가 가파르거나 턱이 있어요</span>
+          </div>
+          <span class="color-badge yellow">🟡</span>
+        </button>
+
+        <!-- Red: Inaccessible -->
+        <button class="rating-option-btn rate-inaccessible" data-rating="inaccessible">
+          <div class="rating-icon-wrapper">
+            <i class="fa-solid fa-face-frown"></i>
+          </div>
+          <div class="rating-info">
+            <span class="rating-title">이동 불가능한 길</span>
+            <span class="rating-desc">계단이 있거나 단차가 매우 커요</span>
+          </div>
+          <span class="color-badge red">🔴</span>
+        </button>
+      </div>
+
+      <div class="rating-panel-footer">
+        <button id="cancelRatingBtn" class="footer-cancel-btn">
+          <i class="fa-solid fa-rotate-left"></i> 구간 다시 지정하기
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating Map Legend Panel -->
+    <div id="legend-panel" class="legend-panel">
+      <button id="legendToggleBtn" class="legend-toggle" title="범례 보기">
+        <i class="fa-solid fa-circle-info"></i>
+      </button>
+      <div class="legend-content">
+        <h4><i class="fa-solid fa-map-signs"></i> 길 상태 범례</h4>
+        <ul>
+          <li>
+            <span class="legend-line green"></span>
+            <span class="legend-label">🟢 편리 (휠체어/유모차 이동 편리)</span>
+          </li>
+          <li>
+            <span class="legend-line yellow"></span>
+            <span class="legend-label">🟡 주의 (경사 있음, 노면 주의)</span>
+          </li>
+          <li>
+            <span class="legend-line red"></span>
+            <span class="legend-label">🔴 불가 (계단, 단차, 통행 불가)</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Settings / Firebase Config Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-gears"></i> Firebase DB 설정</h3>
+          <button id="closeSettingsBtn" class="icon-btn modal-close-btn" title="닫기">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">
+            Firestore 데이터베이스를 연결하여 데이터를 영구적으로 저장할 수 있습니다. 
+            설정하지 않는 경우 <strong>로컬 웹 브라우저(LocalStorage)</strong>에 데이터가 임시 저장됩니다.
+          </p>
+          
+          <form id="firebase-config-form">
+            <div class="form-group">
+              <label for="apiKey">API Key (apiKey)</label>
+              <input type="text" id="apiKey" placeholder="AIzaSy..." autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="authDomain">Auth Domain (authDomain)</label>
+              <input type="text" id="authDomain" placeholder="your-app.firebaseapp.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="projectId">Project ID (projectId)</label>
+              <input type="text" id="projectId" placeholder="your-app-id" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="storageBucket">Storage Bucket (storageBucket)</label>
+              <input type="text" id="storageBucket" placeholder="your-app.appspot.com" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="messagingSenderId">Messaging Sender ID (messagingSenderId)</label>
+              <input type="text" id="messagingSenderId" placeholder="1234567890" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="appId">App ID (appId)</label>
+              <input type="text" id="appId" placeholder="1:123456:web:abcd..." autocomplete="off">
+            </div>
+            
+            <div class="modal-actions">
+              <button type="button" id="resetConfigBtn" class="btn btn-secondary">
+                <i class="fa-solid fa-trash-can"></i> 설정 초기화 (로컬 모드)
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> 설정 저장 및 연결
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-message">알림 메시지</span>
+    </div>
+
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Main Application Script (ES Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
