@@ -188,7 +188,6 @@ const DatabaseService = {
     return JSON.parse(localStorage.getItem('barrier_free_paths') || '[]');
   },
 
-  // Save new path
   async savePath(coordinates, rating) {
     const newPath = {
       coordinates: coordinates.map(latlng => [latlng.lat, latlng.lng]),
@@ -204,11 +203,16 @@ const DatabaseService = {
         return newPath;
       } catch (err) {
         console.error("Error saving to Firestore, saving locally instead:", err);
+        // Firebase 저장 실패 시 로컬에 저장하고, 에러 원인이 담긴 토스트만 단독으로 표시합니다.
+        const localPaths = JSON.parse(localStorage.getItem('barrier_free_paths') || '[]');
+        localPaths.push(newPath);
+        localStorage.setItem('barrier_free_paths', JSON.stringify(localPaths));
         showToast(`서버 저장 실패 (${err.message})! 브라우저에 임시 저장합니다.`);
+        return newPath;
       }
     }
 
-    // LocalStorage fallback
+    // 처음부터 Firebase 미연결(로컬 모드)인 경우에만 이 블록 실행
     const localPaths = JSON.parse(localStorage.getItem('barrier_free_paths') || '[]');
     localPaths.push(newPath);
     localStorage.setItem('barrier_free_paths', JSON.stringify(localPaths));
