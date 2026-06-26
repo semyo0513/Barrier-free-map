@@ -104,7 +104,11 @@ const DatabaseService = {
     
     if (savedConfig) {
       try {
-        config = JSON.parse(savedConfig);
+        const parsed = JSON.parse(savedConfig);
+        // 저장된 설정이 유효한지 확인 (더미 값이거나 빈 값이 아니어야 함)
+        if (parsed && parsed.apiKey && parsed.apiKey !== "" && !parsed.apiKey.includes("AIzaSy...") && !parsed.apiKey.includes("YOUR_")) {
+          config = parsed;
+        }
       } catch (e) {
         console.error("Failed to parse stored Firebase config:", e);
       }
@@ -174,8 +178,9 @@ const DatabaseService = {
         });
         return paths;
       } catch (err) {
-        console.error("Error fetching from Firestore, loading local data:", err);
-        showToast("원격 데이터를 불러오지 못했습니다. 로컬 데이터를 불러옵니다.");
+        console.error("Error fetching from Firestore, switching to local storage:", err);
+        this.fallbackToLocal();
+        showToast(`Firebase 로드 실패: ${err.message}. 로컬 모드로 전환합니다.`);
       }
     }
     
@@ -199,7 +204,7 @@ const DatabaseService = {
         return newPath;
       } catch (err) {
         console.error("Error saving to Firestore, saving locally instead:", err);
-        showToast("서버 저장 실패! 웹 브라우저(로컬)에 저장합니다.");
+        showToast(`서버 저장 실패 (${err.message})! 브라우저에 임시 저장합니다.`);
       }
     }
 
