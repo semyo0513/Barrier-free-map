@@ -38,17 +38,17 @@ const PATH_STYLES = {
 // Mock Initial Data (Sacheon-si City Hall vicinity)
 const MOCK_PATHS = [
   {
-    coordinates: [[35.0032, 128.0625], [35.0035, 128.0640], [35.0042, 128.0645]],
+    coordinates: [{lat: 35.0032, lng: 128.0625}, {lat: 35.0035, lng: 128.0640}, {lat: 35.0042, lng: 128.0645}],
     rating: 'convenient',
     createdAt: new Date().toISOString()
   },
   {
-    coordinates: [[35.0042, 128.0645], [35.0055, 128.0655]],
+    coordinates: [{lat: 35.0042, lng: 128.0645}, {lat: 35.0055, lng: 128.0655}],
     rating: 'caution',
     createdAt: new Date().toISOString()
   },
   {
-    coordinates: [[35.0055, 128.0655], [35.0062, 128.0650]],
+    coordinates: [{lat: 35.0055, lng: 128.0655}, {lat: 35.0062, lng: 128.0650}],
     rating: 'inaccessible',
     createdAt: new Date().toISOString()
   }
@@ -190,7 +190,7 @@ const DatabaseService = {
 
   async savePath(coordinates, rating) {
     const newPath = {
-      coordinates: coordinates.map(latlng => [latlng.lat, latlng.lng]),
+      coordinates: coordinates.map(latlng => ({ lat: latlng.lat, lng: latlng.lng })),
       rating: rating,
       createdAt: new Date().toISOString()
     };
