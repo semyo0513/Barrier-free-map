@@ -110,8 +110,21 @@ const DatabaseService = {
       }
     }
 
+    // Default configuration (User's Firebase credentials)
+    if (!config) {
+      config = {
+        apiKey: "AIzaSyB46_ftRZ01Psd3fo4d5R36a-zlgQJXxmc",
+        authDomain: "barrier-free-map-da8a7.firebaseapp.com",
+        projectId: "barrier-free-map-da8a7",
+        storageBucket: "barrier-free-map-da8a7.firebasestorage.app",
+        messagingSenderId: "643426179252",
+        appId: "1:643426179252:web:88735322da53f8c94a1fe1",
+        measurementId: "G-FB20RMBWEB"
+      };
+    }
+
     // Check if configuration is present and valid
-    if (config && config.apiKey && config.projectId && !config.apiKey.includes('YOUR_')) {
+    if (config && config.apiKey && config.projectId) {
       try {
         const app = initializeApp(config);
         db = getFirestore(app);
@@ -120,7 +133,6 @@ const DatabaseService = {
         // Update badge UI
         dbStatusBadge.className = 'status-badge firestore';
         dbStatusText.textContent = 'Firebase';
-        showToast("Firebase Firestore에 성공적으로 연결되었습니다.");
         
         // Pre-fill form inputs
         Object.keys(config).forEach(key => {
@@ -128,7 +140,7 @@ const DatabaseService = {
           if (input) input.value = config[key];
         });
       } catch (err) {
-        console.warn("Firebase config found but failed to initialize:", err);
+        console.warn("Firebase failed to initialize:", err);
         this.fallbackToLocal();
       }
     } else {
@@ -213,6 +225,9 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Load and Render Existing Paths
   loadAndRenderPaths();
+  
+  // Automatically locate user on startup
+  locateUser();
 });
 
 // --- MAP FUNCTIONS ---
