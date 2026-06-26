@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 모두의 무장애지도에서 업로드하는 길 상태(paths) 컬렉션에 대한 보안 규칙
+    match /paths/{document} {
+      // 누구나 지도를 읽고 새로운 길 정보를 등록(제보)할 수 있도록 허용합니다.
+      allow read, write: if true;
+    }
+  }
+}
